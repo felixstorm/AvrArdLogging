@@ -1,6 +1,6 @@
-AvrArdLogging
-====================
-
+/*
+ * AvrArdLogging.h
+ *
 
 About
 --------------------
@@ -99,3 +99,142 @@ Resources, My Inspirations etc.
 License: GPL
 --------------------
 <http://www.gnu.org/licenses/gpl.html>
+
+*/
+
+
+#ifndef AVRARDLOGGING_H_
+#define AVRARDLOGGING_H_
+
+
+#if defined(LOG_LEVEL) && LOG_LEVEL > 0
+
+
+#ifdef ARDUINO
+
+#define LOG_SER_INIT(baudRate) \
+    Serial.begin(baudRate);
+#define LOG_SER_PUTC(c) \
+    Serial.write(c);
+
+#else
+
+#define LOG_SER_INIT(baudRate) \
+    UBRR0 = F_CPU / ((baudRate) * 8l) - 1; \
+    UCSR0A = _BV(U2X0); \
+    UCSR0C = _BV(UCSZ01) | _BV(UCSZ00); \
+    UCSR0B = _BV(RXEN0) | _BV(TXEN0);
+#define LOG_SER_PUTC(c) \
+    loop_until_bit_is_set(UCSR0A, UDRE0); \
+    UDR0 = c;
+
+#endif
+
+
+#define LOG_GLOBALS \
+    static FILE serialOut = {0}; \
+    static int serialPutc(char c, FILE *stream) \
+    { \
+        LOG_SER_PUTC(c); \
+        return 0; \
+    }
+
+#define LOG_INIT(baudRate) \
+    do { \
+        LOG_SER_INIT(baudRate); \
+        fdev_setup_stream(&serialOut, serialPutc, NULL, _FDEV_SETUP_WRITE); \
+        stdout = &serialOut; \
+    } while(0)
+
+#define LOG_ERR_HEADER "\r\n********** ERROR **********\r\n"
+#define LOG_ERR_FOOTER "\r\n***************************\r\n\r\n"
+#define LOGB_ERR(fmt, ...) (printf_P(PSTR(LOG_ERR_HEADER fmt), ## __VA_ARGS__))
+#define LOGC_ERR(fmt, ...) (printf_P(PSTR(fmt), ## __VA_ARGS__))
+#define LOGE_ERR(fmt, ...) (printf_P(PSTR(fmt LOG_ERR_FOOTER), ## __VA_ARGS__))
+#define LOG_ERR(fmt, ...) (printf_P(PSTR(LOG_ERR_HEADER fmt LOG_ERR_FOOTER), ## __VA_ARGS__))
+
+
+#else
+
+#define LOG_GLOBALS
+#define LOG_INIT(baud) ((void)0)
+
+#define LOGB_ERR(fmt, ...) ((void)0)
+#define LOGC_ERR(fmt, ...) ((void)0)
+#define LOGE_ERR(fmt, ...) ((void)0)
+#define LOG_ERR(fmt, ...) ((void)0)
+
+#endif
+
+
+#if defined(LOG_LEVEL) && LOG_LEVEL > 1
+
+#define LOG_WARN_HEADER "*** WARNING: "
+#define LOG_WARN_FOOTER "\r\n"
+#define LOGB_WARN(fmt, ...) (printf_P(PSTR(LOG_WARN_HEADER fmt), ## __VA_ARGS__))
+#define LOGC_WARN(fmt, ...) (printf_P(PSTR(fmt), ## __VA_ARGS__))
+#define LOGE_WARN(fmt, ...) (printf_P(PSTR(fmt LOG_WARN_FOOTER), ## __VA_ARGS__))
+#define LOG_WARN(fmt, ...) (printf_P(PSTR(LOG_WARN_HEADER fmt LOG_WARN_FOOTER), ## __VA_ARGS__))
+
+#else
+
+#define LOGB_WARN(fmt, ...) ((void)0)
+#define LOGC_WARN(fmt, ...) ((void)0)
+#define LOGE_WARN(fmt, ...) ((void)0)
+#define LOG_WARN(fmt, ...) ((void)0)
+
+#endif
+
+
+#if defined(LOG_LEVEL) && LOG_LEVEL > 2
+
+#define LOGB(fmt, ...) (printf_P(PSTR(fmt), ## __VA_ARGS__))
+#define LOGC(fmt, ...) (printf_P(PSTR(fmt), ## __VA_ARGS__))
+#define LOGE(fmt, ...) (printf_P(PSTR(fmt "\r\n"), ## __VA_ARGS__))
+#define LOG(fmt, ...) (printf_P(PSTR(fmt "\r\n"), ## __VA_ARGS__))
+
+#else
+
+#define LOGB(fmt, ...) ((void)0)
+#define LOGC(fmt, ...) ((void)0)
+#define LOGE(fmt, ...) ((void)0)
+#define LOG(fmt, ...) ((void)0)
+
+#endif
+
+
+#if defined(LOG_LEVEL) && LOG_LEVEL > 3
+
+#define LOGB_VERB(fmt, ...) (printf_P(PSTR(fmt), ## __VA_ARGS__))
+#define LOGC_VERB(fmt, ...) (printf_P(PSTR(fmt), ## __VA_ARGS__))
+#define LOGE_VERB(fmt, ...) (printf_P(PSTR(fmt "\r\n"), ## __VA_ARGS__))
+#define LOG_VERB(fmt, ...) (printf_P(PSTR(fmt "\r\n"), ## __VA_ARGS__))
+
+#else
+
+#define LOGB_VERB(fmt, ...) ((void)0)
+#define LOGC_VERB(fmt, ...) ((void)0)
+#define LOGE_VERB(fmt, ...) ((void)0)
+#define LOG_VERB(fmt, ...) ((void)0)
+
+#endif
+
+
+#if defined(LOG_LEVEL) && LOG_LEVEL > 4
+
+#define LOGB_DBG(fmt, ...) (printf_P(PSTR(fmt), ## __VA_ARGS__))
+#define LOGC_DBG(fmt, ...) (printf_P(PSTR(fmt), ## __VA_ARGS__))
+#define LOGE_DBG(fmt, ...) (printf_P(PSTR(fmt "\r\n"), ## __VA_ARGS__))
+#define LOG_DBG(fmt, ...) (printf_P(PSTR(fmt "\r\n"), ## __VA_ARGS__))
+
+#else
+
+#define LOGB_DBG(fmt, ...) ((void)0)
+#define LOGC_DBG(fmt, ...) ((void)0)
+#define LOGE_DBG(fmt, ...) ((void)0)
+#define LOG_DBG(fmt, ...) ((void)0)
+
+#endif
+
+
+#endif /* AVRARDLOGGING_H_ */
