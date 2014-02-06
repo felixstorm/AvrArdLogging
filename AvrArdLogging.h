@@ -110,7 +110,7 @@ License: GPL
 #if defined(LOG_LEVEL) && LOG_LEVEL > 0
 
 
-#ifdef ARDUINO
+#if defined(ARDUINO) && !defined(LOG_USE_RAWSERIAL)
 
 #define LOG_SER_INIT(baudRate) \
     Serial.begin(baudRate);
@@ -144,6 +144,7 @@ License: GPL
         LOG_SER_INIT(baudRate); \
         fdev_setup_stream(&serialOut, serialPutc, NULL, _FDEV_SETUP_WRITE); \
         stdout = &serialOut; \
+        stderr = &serialOut; \
     } while(0)
 
 #define LOG_ERR_HEADER "\r\n********** ERROR **********\r\n"
